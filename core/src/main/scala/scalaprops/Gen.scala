@@ -1,53 +1,78 @@
 package scalaprops
 
-import Gen.gen
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.Future
 import scalaz._
 
-final case class Gen[A] private(f: (Int, Rand) => (A, Rand)) {
+final case class GenT[F[_], A] private(f: (Int, Rand) => F[(A, Rand)]) {
 
-  def map[B](g: A => B): Gen[B] =
-    gen{ (i, r) =>
-      val (a, r0) = f(i, r)
-      (g(a), r0)
+  def map[B](g: A => B)(implicit F: Functor[F]): GenT[F, B] =
+    GenT{ (i, r1) =>
+      F.map(f(i, r1)){ case (a, r2) =>
+        g(a) -> r2
+      }
     }
 
-  def flatMap[B](g: A => Gen[B]): Gen[B] =
-    gen{ (i, r) =>
-      val (a, r0) = f(i, r)
-      g(a).f(i, r0)
+  def flatMap[B](g: A => GenT[F, B])(implicit F: Bind[F]): GenT[F, B] =
+    GenT{ (i, r1) =>
+      F.bind(f(i, r1)){ case (a, r2) =>
+        g(a).f(i, r2)
+      }
     }
 
-  def resize(s: Int): Gen[A] =
+  def resize(s: Int): GenT[F, A] =
     mapSize(Function.const(s))
 
-  def mapSize(g: Int => Int): Gen[A] =
-    gen((s, r) => f(g(s), r))
+  def mapSize(g: Int => Int): GenT[F, A] =
+    GenT[F, A]((s, r) => f(g(s), r))
+
+  import scalaz.Leibniz.===
 
   /** convenience method for get sample values */
-  def samples(size: Int = Param.defaultSize, listSize: Int = 100, seed: Long = Rand.defaultSeed): List[A] =
-    Gen.sequenceNList(listSize, this).f(size, Rand.standard(seed))._1
+  def samples(size: Int = Param.defaultSize, listSize: Int = 100, seed: Long = Rand.defaultSeed)(implicit e: GenT[F, A] === Gen[A]): List[A] =
+    Gen.sequenceNList(listSize, e(this)).f(size, Rand.standard(seed))._1
 
-  def sample(size: Int = Param.defaultSize, seed: Long = Rand.defaultSeed): A =
-    f(size, Rand.standard(seed))._1
+  def sample(size: Int = Param.defaultSize, seed: Long = Rand.defaultSeed)(implicit F: Functor[F]): F[A] =
+    F.map(f(size, Rand.standard(seed)))(_._1)
 
-  def infiniteIterator(size: Int = Param.defaultSize, seed: Long = Rand.defaultSeed): Iterator[A] =
-    Gen.infinite(size, Rand.standard(seed), this)
+  def infiniteIterator(size: Int = Param.defaultSize, seed: Long = Rand.defaultSeed)(implicit e: GenT[F, A] === Gen[A]): Iterator[A] =
+    Gen.infinite(size, Rand.standard(seed), e(this))
 
-  def infiniteStream(size: Int = Param.defaultSize, seed: Long = Rand.defaultSeed): Stream[A] =
-    Gen.infinite(size, Rand.standard(seed), this).toStream
+  def infiniteStream(size: Int = Param.defaultSize, seed: Long = Rand.defaultSeed)(implicit e: GenT[F, A] === Gen[A]): Stream[A] =
+    Gen.infinite(size, Rand.standard(seed), e(this)).toStream
+
+  def toReaderState(implicit F: Functor[F]): Kleisli[({type l[a] = StateT[F, Rand, a]})#l, Int, A] =
+    Gen.toReaderState[F, A](this)
+
+  def toStateReader(implicit F: Functor[F]): StateT[({type l[a] = Kleisli[F, Int, a]})#l, Rand, A] =
+    Gen.toStateReader[F, A](this)
 }
 
 
-sealed abstract class GenInstances0 extends GenInstances {
+sealed abstract class GenTInstances1 extends GenInstances {
 
   implicit final def endomorphicGen[F[_, _], A](implicit F: Gen[F[A, A]]): Gen[Endomorphic[F, A]] =
     F.map(Endomorphic.apply)
 
+  implicit def genTFunctor[F[_]](implicit F0: Functor[F]): Functor[({type l[a] = GenT[F, a]})#l] =
+    new GenTFunctor[F] { def F = F0 }
+
 }
 
-object Gen extends GenInstances0 {
+sealed abstract class GenTInstances0 extends GenTInstances1 {
+  implicit def genTBind[F[_]](implicit F0: Bind[F]): Bind[({type l[a] = GenT[F, a]})#l] =
+    new GenTBind[F] { def F = F0 }
+}
+
+sealed abstract class GenTInstances extends GenTInstances0 {
+  implicit def genTMonad[F[_]](implicit F0: Monad[F]): Monad[({type l[a] = GenT[F, a]})#l] =
+    new GenTMonad[F] { def F = F0 }
+}
+
+object GenT extends GenTInstances {
+
+  implicit def genTMonadPlus[F[_]](implicit F0: MonadPlus[F]): MonadPlus[({type l[a] = GenT[F, a]})#l] =
+    new GenTMonadPlus[F] { def F = F0 }
 
   private[this] val iListFromList = IList.fromList[Any] _
   private[scalaprops] def IListFromList[A]: List[A] => IList[A] =
@@ -56,10 +81,55 @@ object Gen extends GenInstances0 {
   def gen[A](f: (Int, Rand) => (A, Rand)): Gen[A] =
     new Gen(f)
 
+  def genT[F[_], A](f: (Int, Rand) => F[(A, Rand)]): GenT[F, A] =
+    new GenT(f)
+
   def apply[A](implicit A: Gen[A]): Gen[A] = A
 
   def value[A](a: A): Gen[A] =
     gen((_, r) => (a, r))
+
+  import Isomorphism._
+
+  def isoReaderState[F[_]: Functor]: ({type x[b] = Kleisli[({type l[a] = StateT[F, Rand, a]})#l, Int, b]})#x <~> ({type l[a] = GenT[F, a]})#l =
+    new IsoFunctorTemplate[({type x[b] = Kleisli[({type l[a] = StateT[F, Rand, a]})#l, Int, b]})#x, ({type l[a] = GenT[F, a]})#l] {
+      def to[A](fa: Kleisli[({type l[a] = StateT[F, Rand, a]})#l, Int, A]) =
+        fromReaderState(fa)
+      def from[A](ga: GenT[F, A]): Kleisli[({type l[a] = StateT[F, Rand, a]})#l, Int, A] =
+        toReaderState(ga)
+    }
+
+  def isoStateReader[F[_]: Functor]: ({type x[b] = StateT[({type l[a] = Kleisli[F, Int, a]})#l, Rand, b]})#x <~> ({type l[a] = GenT[F, a]})#l =
+    new IsoFunctorTemplate[({type x[b] = StateT[({type l[a] = Kleisli[F, Int, a]})#l, Rand, b]})#x, ({type l[a] = GenT[F, a]})#l] {
+      def to[A](fa: StateT[({type l[a] = Kleisli[F, Int, a]})#l, Rand, A]) =
+        fromStateReader(fa)
+      def from[A](ga: GenT[F, A]): StateT[({type l[a] = Kleisli[F, Int, a]})#l, Rand, A] =
+        toStateReader(ga)
+    }
+
+  def toReaderState[F[_], A](g: GenT[F, A])(implicit F: Functor[F]): Kleisli[({type l[a] = StateT[F, Rand, a]})#l, Int, A] =
+    Kleisli[({type l[a] = StateT[F, Rand, a]})#l, Int, A] { size: Int =>
+      StateT { rand: Rand =>
+        F.map(g.f(size, rand))(_.swap)
+      }
+    }
+
+  def fromReaderState[F[_], A](a: Kleisli[({type l[a] = StateT[F, Rand, a]})#l, Int, A])(implicit F: Functor[F]): GenT[F, A] =
+    GenT{ (size, rand) =>
+      F.map(a.run(size).run(rand))(_.swap)
+    }
+
+  def toStateReader[F[_], A](g: GenT[F, A])(implicit F: Functor[F]): StateT[({type l[a] = Kleisli[F, Int, a]})#l, Rand, A] =
+    StateT[({type l[a] = Kleisli[F, Int, a]})#l, Rand, A] { rand: Rand =>
+      Kleisli { size: Int =>
+        F.map(g.f(size, rand))(_.swap)
+      }
+    }
+
+  def fromStateReader[F[_], A](a: StateT[({type l[a] = Kleisli[F, Int, a]})#l, Rand, A])(implicit F: Functor[F]): GenT[F, A] =
+    GenT{ (size, rand) =>
+      F.map(a(rand).run(size))(_.swap)
+    }
 
   def oneOf[A](x: Gen[A], xs: Gen[A]*): Gen[A] = {
     val array = (x +: xs).toArray[Any]
@@ -240,15 +310,8 @@ object Gen extends GenInstances0 {
   def promote[A, B](f: A => Gen[B]): Gen[A => B] =
     gen((i, r) => (a => f(a).f(i, r)._1, r))
 
-  implicit val instance: Monad[Gen] =
-    new Monad[Gen] {
-      override def bind[A, B](fa: Gen[A])(f: A => Gen[B]) =
-        fa flatMap f
-      override def map[A, B](fa: Gen[A])(f: A => B) =
-        fa map f
-      override def point[A](a: => A) =
-        Gen.value(a)
-    }
+  val genInstance: Monad[Gen] =
+    genTMonad[scalaz.Id.Id]
 
   implicit val genBoolean: Gen[Boolean] =
     elements(true, false)
@@ -694,4 +757,35 @@ object Gen extends GenInstances0 {
 
   implicit def partialFunctionGen[A: Cogen, B: Gen]: Gen[PartialFunction[A, B]] =
     Gen[A => Option[B]].map(Function.unlift)
+
+  implicit def genTGen[F[_]: Functor, A](implicit F: Gen[Kleisli[({type l[a] = StateT[F, Rand, a]})#l, Int, A]]): Gen[GenT[F, A]] =
+    F.map(fromReaderState(_))
+}
+
+
+private trait GenTFunctor[F[_]] extends Functor[({type l[a] = GenT[F, a]})#l] {
+  protected[this] implicit def F: Functor[F]
+
+  override final def map[A, B](fa: GenT[F, A])(f: A => B) =
+    fa map f
+}
+
+private trait GenTBind[F[_]] extends GenTFunctor[F] with Bind[({type l[a] = GenT[F, a]})#l]{
+  protected[this] implicit def F: Bind[F]
+
+  override final def bind[A, B](fa: GenT[F, A])(f: A => GenT[F, B]) =
+    fa flatMap f
+}
+
+private abstract class GenTMonad[F[_]] extends Monad[({type l[a] = GenT[F, a]})#l] with GenTBind[F]{
+  protected[this] implicit def F: Monad[F]
+
+  override final def point[A](a: => A) =
+    GenT.genT((_, r) => F.point((a, r)))
+}
+
+private abstract class GenTMonadPlus[F[_]] extends IsomorphismMonadPlus[({type l[a] = GenT[F, a]})#l, ({type x[b] = Kleisli[({type l[a] = StateT[F, Rand, a]})#l, Int, b]})#x]{
+  protected[this] implicit def F: MonadPlus[F]
+  override final def G = Kleisli.kleisliMonadPlus[({type l[a] = StateT[F, Rand, a]})#l, Int]
+  override def iso = GenT.isoReaderState[F](F).flip
 }

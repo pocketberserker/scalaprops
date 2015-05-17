@@ -29,12 +29,12 @@ object GenTest extends Scalaprops {
     )
   }
 
-  implicit def genEqual[A](implicit A: Equal[A]): Equal[Gen[A]] =
+  implicit def genTEqual[F[_], A](implicit A: Equal[F[(A, Rand)]]): Equal[GenT[F, A]] =
     Equal.equal{ (x, y) =>
       Iterator.fill(100)((Random.nextInt(), Random.nextLong())).forall{
         case (size, seed) =>
           val r = Rand.standard(seed)
-          Equal[(A, Rand)].equal(x.f(size, r), y.f(size, r))
+          A.equal(x.f(size, r), y.f(size, r))
       }
     }
 
@@ -44,6 +44,31 @@ object GenTest extends Scalaprops {
       scalazlaws.monad.all[Gen],
       scalazlaws.equal.all[Gen[Int]]
     )
+
+  val `GenT[Maybe, _]` = {
+    implicit def f[A: Gen] = GenT.genTGen[Maybe, A](
+      implicitly,
+      Gen.kleisli[({type l[a] = StateT[Maybe, Rand, a]})#l, Int, A]
+    )
+
+    Properties.list(
+      scalazlaws.monadPlusStrong.all[({type l[a] = GenT[Maybe, a]})#l],
+      scalazlaws.equal.all[GenT[Maybe, Int]]
+    )
+  }
+
+  val `GenT[IList, _]` = {
+    implicit def f[A: Gen] = GenT.genTGen[IList, A](
+      implicitly,
+      Gen.kleisli[({type l[a] = StateT[IList, Rand, a]})#l, Int, A]
+    )
+
+    Properties.list(
+      scalazlaws.monadPlusStrong.all[({type l[a] = GenT[IList, a]})#l],
+      scalazlaws.equal.all[GenT[IList, Int]]
+    ).andThenParam(Param.maxSize(5))
+  }
+
 
   val `test Gen.elements` = {
     val N = 5
@@ -99,5 +124,21 @@ object GenTest extends Scalaprops {
     val max = math.max(a, b)
     val min = math.min(a, b)
     (min <= x) && (x <= max)
+  }
+
+  object instances {
+    def functor[F[_]: Functor, A] = Functor[({type l[a] = GenT[F, a]})#l]
+    def functor[F[_]: Bind, A] = Functor[({type l[a] = GenT[F, a]})#l]
+    def functor[F[_]: Monad, A] = Functor[({type l[a] = GenT[F, a]})#l]
+    def functor[F[_]: MonadPlus, A] = Functor[({type l[a] = GenT[F, a]})#l]
+
+    def bind[F[_]: Bind, A] = Bind[({type l[a] = GenT[F, a]})#l]
+    def bind[F[_]: Monad, A] = Bind[({type l[a] = GenT[F, a]})#l]
+    def bind[F[_]: MonadPlus, A] = Bind[({type l[a] = GenT[F, a]})#l]
+
+    def monad[F[_]: Monad, A] = Monad[({type l[a] = GenT[F, a]})#l]
+    def monad[F[_]: MonadPlus, A] = Monad[({type l[a] = GenT[F, a]})#l]
+
+    def monadPlus[F[_]: MonadPlus, A] = MonadPlus[({type l[a] = GenT[F, a]})#l]
   }
 }
