@@ -1,26 +1,28 @@
 package scalaprops
 
 import java.util.concurrent.atomic.AtomicBoolean
+import scalaz.Leibniz.===
 import scalaz._
+import scalaz.Id.Id
 
-final case class Property(f: (Int, Rand) => (Result, Rand)) {
-  def toCheck: Check =
-    Check(this)
+final case class PropertyT[F[_]](f: (Int, Rand) => F[(Result, Rand)]) {
+  def toCheck: CheckT[F] =
+    CheckT(this)
 
-  def toCheckWith(endo: Endo[Param]): Check =
-    Check(this, endo)
+  def toCheckWith(endo: Endo[Param]): CheckT[F] =
+    CheckT(this, endo)
 
-  def resize(size: Int): Property =
+  def resize(size: Int): PropertyT[F] =
     Property.fromGen(gen.resize(size))
 
-  def mapSize(g: Int => Int): Property =
+  def mapSize(g: Int => Int): PropertyT[F] =
     Property.fromGen(gen.mapSize(g))
 
-  def gen: Gen[Result] = Gen.gen(f)
+  def gen: GenT[F, Result] = Gen.genT(f)
 
-  def and(p: Property): Property =
+  def and(p: PropertyT[F])(implicit F: Bind[F]): PropertyT[F] =
     Property.fromGen(
-      Apply[Gen].apply2(gen, p.gen)((res1, res2) =>
+      Apply[({type l[a] = GenT[F, a]})#l].apply2(gen, p.gen)((res1, res2) =>
         if(res1.isException || res1.isFalsified){
           res1
         }else if(res2.isException || res2.isFalsified){
@@ -33,9 +35,9 @@ final case class Property(f: (Int, Rand) => (Result, Rand)) {
       )
     )
 
-  def or(p: Property): Property =
+  def or(p: PropertyT[F])(implicit F: Bind[F]): PropertyT[F] =
     Property.fromGen(
-      Apply[Gen].apply2(gen, p.gen)((res1, res2) =>
+      Apply[({type l[a] = GenT[F, a]})#l].apply2(gen, p.gen)((res1, res2) =>
         if(res1.isException || res1.isFalsified){
           res1
         }else if(res2.isException || res2.isFalsified){
@@ -48,9 +50,9 @@ final case class Property(f: (Int, Rand) => (Result, Rand)) {
       )
     )
 
-  def sequence(p: Property): Property =
+  def sequence(p: PropertyT[F])(implicit F: Bind[F]): PropertyT[F] =
     Property.fromGen(
-      Apply[Gen].apply2(gen, p.gen)((res1, res2) =>
+      Apply[({type l[a] = GenT[F, a]})#l].apply2(gen, p.gen)((res1, res2) =>
         if(res1.isException || res1.isProven || res1.isUnfalsified) {
           res1
         }else if(res2.isException || res2.isProven || res2.isUnfalsified){
@@ -64,7 +66,7 @@ final case class Property(f: (Int, Rand) => (Result, Rand)) {
     )
 
   // TODO remove `listener` parameter? use scalaz-stream?
-  def check(param: Param, cancel: AtomicBoolean, listener: Int => Unit): CheckResult = {
+  def check(param: Param, cancel: AtomicBoolean, listener: Int => Unit)(implicit F: F[(Result, Rand)] === (Result, Rand)): CheckResult = {
     import param.{rand => _, _}
     @annotation.tailrec
     def loop(s: Int, discarded: Int, sz: Float, random: Rand): CheckResult = if(cancel.get()) {
@@ -76,7 +78,7 @@ final case class Property(f: (Int, Rand) => (Result, Rand)) {
       }
 
       val r = \/.fromTryCatchThrowable[(Result, Rand), Throwable](
-        f(math.round(size), random)
+        F(f(math.round(size), random)) // TODO
       )
 
       r match {
@@ -109,15 +111,18 @@ final case class Property(f: (Int, Rand) => (Result, Rand)) {
     loop(0, 0, minSize, param.rand)
   }
 
-  def toProperties[A](id: A, param: Endo[Param] = Param.id): Properties[A] =
+  def toProperties[A](id: A, param: Endo[Param] = Param.id): PropertiesT[F, A] =
     Properties.single(id, Check(this, param))
 
-  def ignore(reason: String): Property =
-    Property((_, rand) => (Result.Ignored(reason), rand))
+  def ignore[G[_]](reason: String)(implicit G: Applicative[G]): PropertyT[G] =
+    PropertyT[G]((_, rand) => G.point((Result.Ignored(reason), rand)))
 }
 
-object Property {
-  private[this] val noResult = Property((_, r) => (Result.NoResult, r))
+object PropertyT {
+  private[this] val noResult = PropertyT[Id]((_, r) => (Result.NoResult, r))
+
+  def of(f: (Int, Rand) => (Result, Rand)): Property =
+    new Property(f)
 
   def implies(b: => Boolean, p: => Property): Property =
     if(b) {
@@ -126,15 +131,14 @@ object Property {
       noResult
     }
 
-
-  def fromGen(g: Gen[Result]): Property =
+  def fromGen[F[_]](g: GenT[F, Result]): PropertyT[F] =
     Property(g.f)
 
-  def propFromResultLazy(r: Need[Result]): Property =
-    Property((_, rand) => (r.value, rand))
+  def propFromResultLazy[F[_]](r: Need[Result])(implicit F: Applicative[F]): PropertyT[F] =
+    Property((_, rand) => F.point((r.value, rand)))
 
-  def propFromResult(r: Result): Property =
-    Property((_, rand) => (r, rand))
+  def propFromResult[F[_]](r: Result)(implicit F: Applicative[F]): PropertyT[F] =
+    Property((_, rand) => F.point((r, rand)))
 
   val prop: Boolean => Property = b => propFromResult{
     if(b) Result.Proven
@@ -181,12 +185,12 @@ object Property {
       }
     })
 
-  def exception(p: => Property): Property =
+  def exception[F[_]](p: => PropertyT[F])(implicit F: Applicative[F]): PropertyT[F] =
     try {
       p
     } catch {
       case t: Throwable =>
-        Property((i, r) => Result.Exception(IList.empty, t) -> r)
+        PropertyT[F]((i, r) => F.point(Result.Exception(IList.empty, t) -> r))
     }
 
   def forAll(result: => Boolean): Property =
