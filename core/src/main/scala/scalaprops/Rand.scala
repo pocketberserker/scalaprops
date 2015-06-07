@@ -78,6 +78,15 @@ abstract class Rand {
   def next: Rand =
     nextInt._1
 
+  final def nextN(n: Int): Rand = {
+    @annotation.tailrec
+    def loop(i: Int, r: Rand): Rand = {
+      if(i <= 0) r
+      else loop(i - 1, r.next)
+    }
+    loop(n, this)
+  }
+
   def reseed(newSeed: Long): Rand
 }
 

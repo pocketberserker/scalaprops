@@ -144,13 +144,27 @@ final class ScalapropsRunner(
                 val start = System.currentTimeMillis()
                 val r = try {
                   obj.listener.onStart(obj, name, check.prop, param, log)
-                  val r = scalaz.concurrent.Task(
-                    check.prop.check(
-                      param,
-                      cancel,
-                      count => obj.listener.onCheck(obj, name, check, log, count)
-                    )
-                  )(executorService).runFor(obj.param.timeout)
+                  val r = if(param.parallel == 1){
+                    scalaz.concurrent.Task(
+                      check.prop.check(
+                        param,
+                        cancel,
+                        count => obj.listener.onCheck(obj, name, check, log, count)
+                      )
+                    )(scalaz.concurrent.Strategy.DefaultExecutorService).runFor(obj.param.timeout)
+                  }else{
+                    Nondeterminism[scalaz.concurrent.Task].aggregate(
+                      param.list.map{ p =>
+                        scalaz.concurrent.Task(
+                          check.prop.check(
+                            p,
+                            cancel,
+                            count => () //obj.listener.onCheck(obj, name, check, log, count)
+                          )
+                        )(executorService)
+                      }
+                    ).runFor(obj.param.timeout)
+                  }
                   val duration = System.currentTimeMillis() - start
                   obj.listener.onFinish(obj, name, check.prop, param, r, log)
                   r match {
