@@ -2,7 +2,8 @@ package scalaprops
 
 import scalaz._
 import scalaz.std.anyVal._
-import scalaz.std.stream._
+import scalaz.std.option._
+import scalaz.std.tuple._
 
 object StreamTTest extends Scalaprops {
 
@@ -32,10 +33,17 @@ object StreamTTest extends Scalaprops {
     )
   }
 
+  private[this] implicit def yetAnotherEqual[F[_]: Monad, A](
+    implicit E: shapeless.Lazy[Equal[F[Option[(A, StreamT[F, A])]]]]
+  ): Equal[StreamT[F, A]] = scalaz.Equal.equal{
+    (a, b) =>
+      E.value.equal(a.uncons, b.uncons)
+  }
+
   val iList = {
     type F[A] = StreamT[IList, A]
     Properties.list(
-      scalazlaws.monadPlus.all[F],
+      scalazlaws.monadPlus.all[F](implicitly, implicitly, implicitly, yetAnotherEqual[IList, Int]),
       scalazlaws.equal.all[F[Int]]
     )
   }.andThenParam(Param.maxSize(3))
