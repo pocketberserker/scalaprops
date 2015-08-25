@@ -22,7 +22,7 @@ object ListTTest extends Scalaprops {
 
   val showingAndShrinkingFunction = {
     type A = Byte
-    scalazlaws.bindS.associativity[F, A, A, A].toProperties(
+    scalazlaws.bind[Fun, GS, Int].associativity[F, A, A, A].toProperties(
       "scalaz issue 921",
       Foldable[IList].fold(
         IList(Param.maxSize(3), Param.minSuccessful(1000))
