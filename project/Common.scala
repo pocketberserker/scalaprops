@@ -13,6 +13,12 @@ object Common {
 
   private[this] val Scala211 = "2.11.7"
 
+  private[this] val unusedWarnings = (
+     "-Ywarn-unused" ::
+     "-Ywarn-unused-import" ::
+     Nil
+   )
+
   val commonSettings = Seq(
     scalaVersion := Scala211,
     //crossScalaVersions := Scala211 :: "2.10.5" :: Nil,
@@ -59,10 +65,11 @@ object Common {
       "-language:higherKinds" ::
       "-language:implicitConversions" ::
       "-Yno-adapted-args" ::
-      "-Ywarn-unused" ::
-      "-Ywarn-unused-import" ::
       Nil
     ),
+    scalacOptions ++= PartialFunction.condOpt(CrossVersion.partialVersion(scalaVersion.value)){
+      case Some((2, v)) if v >= 11 => unusedWarnings
+    }.toList.flatten,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
