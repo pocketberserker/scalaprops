@@ -53,19 +53,15 @@ object build extends Build {
     libraryDependencies += "com.github.japgolly.fork.scalaz" %%% "scalaz-core" % scalazVersion.value,
     libraryDependencies ++= {
       val v = build.shapelessVersion.value
-      if(scalaVersion.value.startsWith("2.10")) Seq(
-        "com.github.japgolly.fork.shapeless" %%% "shapeless" % v % "test",
-        compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
-      ) else if(scalaVersion.value.startsWith("2.12")) {
-        Nil
-      } else Seq(
+      if(scalaVersion.value.startsWith("2.11")) Seq(
         "com.github.japgolly.fork.shapeless" %%% "shapeless" % v % "test"
       )
+      else Nil
     },
     (sources in Test) := {
       val s = (sources in Test).value
       val useShapeless = Set("CofreeTest.scala", "FreeTest.scala")
-      if(scalaVersion.value.startsWith("2.12")) {
+      if(!scalaVersion.value.startsWith("2.11")) {
         s.filterNot(f => useShapeless(f.getName))
       } else {
         s

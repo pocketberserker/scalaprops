@@ -11,17 +11,11 @@ object Common {
     sys.process.Process("git rev-parse HEAD").lines_!.head
   ).getOrElse("master")
 
-  private[this] val unusedWarnings = (
-    "-Ywarn-unused" ::
-    "-Ywarn-unused-import" ::
-    Nil
-  )
-
   private[this] val Scala211 = "2.11.7"
 
   val commonSettings = Seq(
     scalaVersion := Scala211,
-    crossScalaVersions := Scala211 :: "2.10.5" :: Nil,
+    //crossScalaVersions := Scala211 :: "2.10.5" :: Nil,
     organization := "com.github.pocketberserker",
     description := "property based testing library for Scala.JS",
     fullResolvers ~= {_.filterNot(_.name == "jcenter")},
@@ -65,11 +59,10 @@ object Common {
       "-language:higherKinds" ::
       "-language:implicitConversions" ::
       "-Yno-adapted-args" ::
+      "-Ywarn-unused" ::
+      "-Ywarn-unused-import" ::
       Nil
     ),
-    scalacOptions ++= PartialFunction.condOpt(CrossVersion.partialVersion(scalaVersion.value)){
-      case Some((2, v)) if v >= 11 => unusedWarnings
-    }.toList.flatten,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
