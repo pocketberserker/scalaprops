@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object DievTest extends Scalaprops {
 
-  val testLaw =
+  properties("Law") =
     Properties.list(
       scalazlaws.equal.all[Diev[Int]],
       scalazlaws.monoid.all[Diev[Int]]

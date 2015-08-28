@@ -1,6 +1,7 @@
 import sbt._, Keys._
-import sbtunidoc.Plugin._
 import Common._
+import org.scalajs.sbtplugin.ScalaJSPlugin
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
 object build extends Build {
 
@@ -24,17 +25,18 @@ object build extends Build {
 
   private[this] def module(id: String) =
     Project(id, file(id)).settings(commonSettings).settings(
-      scalazVersion := "7.1.3",
-      shapelessVersion := "2.2.5",
-      initialCommands in console += "import scalaprops._, scalaz._"
-    )
+      scalazVersion := "7.1.2",
+      shapelessVersion := "2.1.0-2",
+      initialCommands in console += "import scalaprops._, scalaz._",
+      scalaJSStage in Global := FastOptStage
+    ).enablePlugins(ScalaJSPlugin)
 
   lazy val gen = module("gen").settings(
     Generator.settings
   ).settings(
     name := genName,
     description := "pure functional random value generator",
-    libraryDependencies += "org.scalaz" %% "scalaz-core" % scalazVersion.value
+    libraryDependencies += "com.github.japgolly.fork.scalaz" %%% "scalaz-core" % scalazVersion.value
   )
 
   lazy val core = module("core").settings(
@@ -47,9 +49,19 @@ object build extends Build {
 
   lazy val scalaprops = module(scalapropsName).settings(
     name := scalapropsName,
-    libraryDependencies += "org.scala-sbt" % "test-interface" % "1.0",
-    libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % scalazVersion.value,
-    shapelessDependency("test"),
+    libraryDependencies += "org.scala-js" %% "scalajs-test-interface" % "0.6.4",
+    libraryDependencies += "com.github.japgolly.fork.scalaz" %%% "scalaz-core" % scalazVersion.value,
+    libraryDependencies ++= {
+      val v = build.shapelessVersion.value
+      if(scalaVersion.value.startsWith("2.10")) Seq(
+        "com.github.japgolly.fork.shapeless" %%% "shapeless" % v % "test",
+        compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
+      ) else if(scalaVersion.value.startsWith("2.12")) {
+        Nil
+      } else Seq(
+        "com.github.japgolly.fork.shapeless" %%% "shapeless" % v % "test"
+      )
+    },
     (sources in Test) := {
       val s = (sources in Test).value
       val useShapeless = Set("CofreeTest.scala", "FreeTest.scala")
@@ -63,35 +75,11 @@ object build extends Build {
     parallelExecution in Test := false
   ).dependsOn(core, scalazlaws % "test")
 
-  val sxr = TaskKey[File]("packageSxr")
-
-  import UnidocKeys._
-
   val root = Project("root", file(".")).settings(
-    commonSettings ++
-    unidocSettings ++
-    xerial.sbt.Sonatype.sonatypeRootSettings ++ (
-      core ::
-      scalaprops ::
-      scalazlaws ::
-      Nil
-    ).map(libraryDependencies <++= libraryDependencies in _)
+    commonSettings
   ).settings(
-    name := allName,
-    artifacts := Nil,
-    packagedArtifacts := Map.empty,
-    artifacts <++= Classpaths.artifactDefs(Seq(packageDoc in Compile)),
-    packagedArtifacts <++= Classpaths.packaged(Seq(packageDoc in Compile))
-  ).settings(
-    Sxr.settings1
-  ).settings(
-    Defaults.packageTaskSettings(
-      packageDoc in Compile, (UnidocKeys.unidoc in Compile).map{_.flatMap(Path.allSubpaths)}
-    )
-  ).settings(
-    Sxr.settings2
+    name := allName
   ).aggregate(
     gen, core, scalaprops, scalazlaws
   )
-
 }

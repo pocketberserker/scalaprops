@@ -1,6 +1,6 @@
 package scalaprops
 
-import java.util.WeakHashMap
+import java.util.HashMap
 import scalaz.Maybe
 
 object Variant {
@@ -24,7 +24,7 @@ object Variant {
     }
   }
 
-  private[this] final class VariantCache[K[_], V[_]](delegate: WeakHashMap[Any, Any] = new WeakHashMap[Any, Any]) {
+  private[this] final class VariantCache[K[_], V[_]](delegate: HashMap[Any, Any] = new HashMap[Any, Any]) {
     def put[A](k: K[A], v: V[A]): this.type = {
       delegate.put(k, v)
       this

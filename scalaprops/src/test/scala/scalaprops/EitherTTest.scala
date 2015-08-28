@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object EitherTTest extends Scalaprops {
 
-  val testEitherTMaybe =
+  properties("EitherTMaybe") =
     Properties.list(
       scalazlaws.equal.all[EitherT[Maybe, Int, Int]],
       scalazlaws.monadPlus.all[({type l[a] = EitherT[Maybe, Int, a]})#l],
@@ -13,10 +13,10 @@ object EitherTTest extends Scalaprops {
       scalazlaws.traverse.all[({type l[a] = EitherT[Maybe, Int, a]})#l]
     )
 
-  val testEitherTMaybe2 =
+  properties("EitherTMaybe2") =
     scalazlaws.bitraverse.all[({type l[a, b] = EitherT[Maybe, a, b]})#l]
 
-  val testEitherTIList =
+  properties("EitherTIList") =
     Properties.list(
       scalazlaws.equal.all[EitherT[IList, Int, Int]],
       scalazlaws.monadPlus.all[({type l[a] = EitherT[IList, Int, a]})#l],
@@ -24,7 +24,7 @@ object EitherTTest extends Scalaprops {
       scalazlaws.traverse.all[({type l[a] = EitherT[IList, Int, a]})#l]
     )
 
-  val testEitherTNel =
+  properties("EitherTNel") =
     Properties.list(
       scalazlaws.equal.all[EitherT[NonEmptyList, Int, Int]],
       scalazlaws.monadPlus.all[({type l[a] = EitherT[NonEmptyList, Int, a]})#l],
@@ -32,6 +32,6 @@ object EitherTTest extends Scalaprops {
       scalazlaws.traverse.all[({type l[a] = EitherT[NonEmptyList, Int, a]})#l]
     )
 
-  val monadTrans = scalazlaws.monadTrans.all[({type l[f[_], a] = EitherT[f, Int, a]})#l]
+  properties("Monad Trans") = scalazlaws.monadTrans.all[({type l[f[_], a] = EitherT[f, Int, a]})#l]
 
 }

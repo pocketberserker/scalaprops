@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object DListTest extends Scalaprops {
 
-  val testLaws = Properties.list(
+  properties("Laws") = Properties.list(
     scalazlaws.monadPlusStrong.all[DList],
     scalazlaws.zip.all[DList],
     scalazlaws.isEmpty.all[DList],

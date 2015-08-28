@@ -11,9 +11,9 @@ object NullResultTest extends Scalaprops {
   private[this] implicit def equal[A, B](implicit A: Equal[A => Option[B]]): Equal[NullResult[A, B]] =
     A.contramap(_.apply)
 
-  val testCategory = scalazlaws.category.all[NullResult]
-  val testMonad = scalazlaws.monad.all[({type l[a] = NullResult[Int, a]})#l]
-  val testContravariant = scalazlaws.contravariant.all[({type l[a] = NullResult[a, Int]})#l]
-  val testMonoid = scalazlaws.monoid.all[NullResult[Int, Int]]
+  properties("Category") = scalazlaws.category.all[NullResult]
+  properties("Monad") = scalazlaws.monad.all[({type l[a] = NullResult[Int, a]})#l]
+  properties("Contravariant") = scalazlaws.contravariant.all[({type l[a] = NullResult[a, Int]})#l]
+  properties("Monoid") = scalazlaws.monoid.all[NullResult[Int, Int]]
 
 }

@@ -1,7 +1,11 @@
 package scalaprops
 
 import scalaz._
+import scala.scalajs.js.annotation.JSExportDescendentObjects
+import scala.scalajs.js.annotation.JSExportDescendentClasses
 
+@JSExportDescendentObjects
+@JSExportDescendentClasses
 final class ScalazLaw private(val ord: Int, val fullName: String, val simpleName: String) {
   override def hashCode = ord
   override def toString = simpleName

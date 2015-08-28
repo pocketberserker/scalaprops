@@ -19,16 +19,16 @@ object EndomorphicTest extends Scalaprops {
   ): Equal[Endomorphic[({type l[a, b] = Cokleisli[F, a, b]})#l, A]] =
     F.contramap(_.run)
 
-  val testKleisliMaybe =
+  properties("KleisliMaybe") =
     scalazlaws.monoid.all[Endomorphic[({type l[a, b] = Kleisli[Maybe, a, b]})#l, Int]]
 
-  val testKleisliIList =
+  properties("KleisliIList") =
     scalazlaws.monoid.all[Endomorphic[({type l[a, b] = Kleisli[IList, a, b]})#l, Int]]
 
-  val testCokleisliMaybe =
+  properties("CokleisliMaybe") =
     scalazlaws.semigroup.all[Endomorphic[({type l[a, b] = Cokleisli[Maybe, a, b]})#l, Int]]
 
-  val testCokleisliNel =
+  properties("CokleisliNel") =
     scalazlaws.monoid.all[Endomorphic[({type l[a, b] = Cokleisli[NonEmptyList, a, b]})#l, Int]]
 
 }

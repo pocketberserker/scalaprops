@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object CoproductTest extends Scalaprops {
 
-  val testCoproductNelNel = {
+  properties("CoproductNelNel") = {
     type F[A] = Coproduct[NonEmptyList, NonEmptyList, A]
 
     Properties.list(
@@ -15,7 +15,7 @@ object CoproductTest extends Scalaprops {
     )
   }
 
-  val testCoproductIListMaybe = {
+  properties("CoproductIListMaybe") = {
     type F[A] = Coproduct[IList, Maybe, A]
 
     Properties.list(

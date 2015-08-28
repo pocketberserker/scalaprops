@@ -30,7 +30,7 @@ object FreeTest extends Scalaprops {
       F.map(Free.liftF(_))
     )
 
-  val testMaybe = {
+  properties("Maybe") = {
     type F[A] = Free[Maybe, A]
 
     Properties.list(
@@ -39,7 +39,7 @@ object FreeTest extends Scalaprops {
     )
   }
 
-  val testIList = {
+  properties("IList") = {
     type F[A] = Free[IList, A]
 
     Properties.list(
@@ -48,7 +48,7 @@ object FreeTest extends Scalaprops {
     )
   }
 
-  val testNel = {
+  properties("Nel") = {
     type F[A] = Free[NonEmptyList, A]
 
     Properties.list(
@@ -57,7 +57,7 @@ object FreeTest extends Scalaprops {
     )
   }
 
-  val testDisjunction = {
+  properties("Disjunction") = {
     type S[a] = Int \/ a
     type F[A] = Free[S, A]
     implicit val m = Free.freeMonad[S]

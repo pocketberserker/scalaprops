@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object MonoidCoproductTest extends Scalaprops {
 
-  val testLaws =
+  properties("Laws") =
     Properties.list(
       scalazlaws.equal.all[Int :+: Int],
       scalazlaws.monoid.all[Int :+: Int]

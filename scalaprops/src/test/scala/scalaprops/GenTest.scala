@@ -38,13 +38,13 @@ object GenTest extends Scalaprops {
       }
     }
 
-  val testLaw =
+  properties("Law") =
     Properties.list(
       scalazlaws.monad.all[Gen],
       scalazlaws.equal.all[Gen[Int]]
     )
 
-  val `test Gen.elements` = {
+  properties("test Gen.elements") = {
     val N = 5
 
     Property.forAllG(
@@ -57,7 +57,7 @@ object GenTest extends Scalaprops {
     }.toCheckWith(Param.rand(Rand.fromSeed())).toProperties("test Gen.element")
   }
 
-  val `test Gen.sequenceNList` = {
+  property("test Gen.sequenceNList") = {
     val min = 5
     val max = 30
     val a = - 500
@@ -74,7 +74,7 @@ object GenTest extends Scalaprops {
     }
   }
 
-  val `test Gen.frequencey` =
+  property("test Gen.frequencey") =
     Property.forAllG(
       Gen.sequenceNList(100, Gen.frequency(
         1 -> Gen.value(true),
@@ -85,7 +85,7 @@ object GenTest extends Scalaprops {
       (t.size < f.size) && t.nonEmpty
     }
 
-  val maybeGen = Property.forAllG(
+  property("maybeGen") = Property.forAllG(
     Gen[Int], Gen.choose(100, 10000), Gen[Int]
   ){ (size, listSize, seed) =>
     val values = Gen[Maybe[Int]].samples(size = size, listSize = listSize, seed = seed)
@@ -93,47 +93,47 @@ object GenTest extends Scalaprops {
     (values.size == listSize) && (just > (listSize / 2)) && (just < listSize)
   }
 
-  val choose = Property.forAll{ (a: Int, b: Int, size: Int, seed: Long) =>
+  property("choose") = Property.forAll{ (a: Int, b: Int, size: Int, seed: Long) =>
     val x = Gen.choose(a, b).sample(size = size, seed = seed)
     val max = math.max(a, b)
     val min = math.min(a, b)
     (min <= x) && (x <= max)
   }
 
-  val listOfN_1 = Property.forAll{ (size0: Byte, seed: Long) =>
+  property("listOfN 1") = Property.forAll{ (size0: Byte, seed: Long) =>
     val size = math.abs(size0.toInt)
     val result = Gen.listOfN(size, Gen[Unit]).map(_.size).sample(seed = seed)
     result <= size
   }
 
-  val listOfN_2 = Property.forAll{ seed: Long =>
+  property("listOfN 2") = Property.forAll{ seed: Long =>
     val size = 3
     Gen.listOfN(size, Gen[Unit]).map(_.size).samples(seed = seed, listSize = 100).distinct.size == (size + 1)
   }
 
-  val arrayOfN = Property.forAll{ (size0: Byte, seed: Long) =>
+  property("arrayOfN") = Property.forAll{ (size0: Byte, seed: Long) =>
     val size = math.abs(size0.toInt)
     val result = Gen.arrayOfN(size, Gen[Unit]).map(_.size).sample(seed = seed)
     result <= size
   }
 
-  val posLong = Property.forAllG(Gen.positiveLong){_ > 0}
-  val posInt = Property.forAllG(Gen.positiveInt){_ > 0}
-  val posShort = Property.forAllG(Gen.positiveShort){_ > 0}
-  val posByte = Property.forAllG(Gen.positiveByte){_ > 0}
+  property("posLong") = Property.forAllG(Gen.positiveLong){_ > 0}
+  property("posInt") = Property.forAllG(Gen.positiveInt){_ > 0}
+  property("posShort") = Property.forAllG(Gen.positiveShort){_ > 0}
+  property("posByte") = Property.forAllG(Gen.positiveByte){_ > 0}
 
-  val negLong = Property.forAllG(Gen.negativeLong){_ < 0}
-  val negInt = Property.forAllG(Gen.negativeInt){_ < 0}
-  val negShort = Property.forAllG(Gen.negativeShort){_ < 0}
-  val negByte = Property.forAllG(Gen.negativeByte){_ < 0}
+  property("negLong") = Property.forAllG(Gen.negativeLong){_ < 0}
+  property("negInt") = Property.forAllG(Gen.negativeInt){_ < 0}
+  property("negShort") = Property.forAllG(Gen.negativeShort){_ < 0}
+  property("negByte") = Property.forAllG(Gen.negativeByte){_ < 0}
 
-  val javaEnum = Property.forAll{ seed: Int =>
+  property("javaEnum") = Property.forAll{ seed: Int =>
     val values = Gen[java.util.concurrent.TimeUnit].samples(seed = seed, listSize = 200).toSet
     values == java.util.concurrent.TimeUnit.values().toSet
   }
 
 
-  val genFunction = {
+  properties("genFunction") = {
     def test1[A: Gen: Cogen](name: String) =
       test[A, A](s"$name => $name")
 
@@ -170,7 +170,7 @@ object GenTest extends Scalaprops {
     ).andThenParam(Param.minSuccessful(50))
   }
 
-  val functionGenTest = {
+  properties("functionGenTest") = {
 
     def permutations[A](xs: IList[A], n: Int): IList[IList[A]] =
       if (xs.isEmpty) {

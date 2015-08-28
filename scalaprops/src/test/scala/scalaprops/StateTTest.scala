@@ -11,7 +11,7 @@ object StateTTest extends Scalaprops {
   implicit def stateTEqual[F[_], A, B](implicit F: Equal[A => F[(A, B)]]): Equal[StateT[F, A, B]] =
     F.contramap(_.apply _)
 
-  val testIList = {
+  properties("IList") = {
     type F[A] = StateT[IList, Int, A]
 
     Properties.list(
@@ -20,7 +20,7 @@ object StateTTest extends Scalaprops {
     )
   }
 
-  val testMaybe = {
+  properties("Maybe") = {
     type F[A] = StateT[Maybe, Int, A]
 
     Properties.list(
@@ -29,8 +29,8 @@ object StateTTest extends Scalaprops {
     )
   }
 
-  val bifunctor = scalazlaws.bifunctor.laws[({type l[a, b] = IndexedStateT[Maybe, Int, a, b]})#l]
+  properties("bifunctor") = scalazlaws.bifunctor.laws[({type l[a, b] = IndexedStateT[Maybe, Int, a, b]})#l]
 
-  val monadTrans = scalazlaws.monadTrans.all[({type l[f[_], a] = StateT[f, Int, a]})#l]
+  properties("Monad Trans") = scalazlaws.monadTrans.all[({type l[f[_], a] = StateT[f, Int, a]})#l]
 
 }

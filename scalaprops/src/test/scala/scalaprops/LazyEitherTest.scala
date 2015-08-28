@@ -9,12 +9,12 @@ object LazyEitherTest extends Scalaprops {
   implicit def lazyEitherEqual[A: Equal, B: Equal]: Equal[LazyEither[A, B]] =
     Equal[A Either B].contramap(_.toEither)
 
-  val testLaws1 = Properties.list(
+  properties("Laws1") = Properties.list(
     scalazlaws.monadError.all[LazyEither, Int],
     scalazlaws.traverse.all[({type l[a] = LazyEither[Int, a]})#l]
   )
 
-  val testLaw2 = scalazlaws.bitraverse.all[LazyEither]
-  val testLaw3 = scalazlaws.associative.all[LazyEither]
+  properties("Law2") = scalazlaws.bitraverse.all[LazyEither]
+  properties("Law3") = scalazlaws.associative.all[LazyEither]
 
 }

@@ -6,7 +6,7 @@ import scalaz.std.anyVal._
 
 object IListTest extends Scalaprops {
 
-  val testLaws = Properties.list(
+  properties("Laws") = Properties.list(
     scalazlaws.order.all[IList[Byte]],
     scalazlaws.monadPlusStrong.all[IList],
     scalazlaws.traverse.all[IList],
@@ -16,7 +16,7 @@ object IListTest extends Scalaprops {
     scalazlaws.zip.all[IList]
   )
 
-  val listOf = {
+  properties("listOf") = {
     val g = for {
       min <- Gen.choose(-10, 50)
       xs <- Gen.listOf(Gen[Byte], min)
@@ -28,6 +28,6 @@ object IListTest extends Scalaprops {
     p.toProperties("minimum length")
   }
 
-  val listOf1 = forAllG(Gen.listOf1(Gen[Byte]))(_.nonEmpty)
+  property("listOf1") = forAllG(Gen.listOf1(Gen[Byte]))(_.nonEmpty)
 
 }

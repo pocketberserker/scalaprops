@@ -2,7 +2,11 @@ package scalaprops
 
 import java.util.concurrent.atomic.AtomicBoolean
 import scalaz._
+import scala.scalajs.js.annotation.JSExportDescendentObjects
+import scala.scalajs.js.annotation.JSExportDescendentClasses
 
+@JSExportDescendentObjects
+@JSExportDescendentClasses
 final case class Property(f: (Int, Rand) => (Rand, Result)) {
   def toCheck: Check =
     Check(this)

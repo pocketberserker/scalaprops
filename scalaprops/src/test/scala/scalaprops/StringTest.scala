@@ -26,13 +26,13 @@ object StringTest extends Scalaprops {
     x.toProperties(()).product(y)
   }
 
-  val num = test[GenTags.Num]('0' to '9')
-  val upper = test[GenTags.AlphaUpper]('A' to 'Z')
-  val lower = test[GenTags.AlphaLower]('a' to 'z')
-  val alpha = test[GenTags.Alpha](('a' to 'z') ++ ('A' to 'Z'))
-  val alphaNum = test[GenTags.AlphaNum](('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9'))
+  properties("num") = test[GenTags.Num]('0' to '9')
+  properties("upper") = test[GenTags.AlphaUpper]('A' to 'Z')
+  properties("lower") = test[GenTags.AlphaLower]('a' to 'z')
+  properties("alpha") = test[GenTags.Alpha](('a' to 'z') ++ ('A' to 'Z'))
+  properties("alphaNum") = test[GenTags.AlphaNum](('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9'))
 
-  val genString = {
+  properties("genString") = {
     val g = for {
       min <- Gen.choose(-10, 50)
       s <- Gen.genString(Gen.asciiChar, min)
@@ -44,6 +44,6 @@ object StringTest extends Scalaprops {
     p.toProperties("minimum length")
   }
 
-  val nonEmptyString = forAllG(Gen.nonEmptyString(Gen.asciiChar))(_.nonEmpty)
+  property("nonEmptyString") = forAllG(Gen.nonEmptyString(Gen.asciiChar))(_.nonEmpty)
 
 }

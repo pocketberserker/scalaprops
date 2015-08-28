@@ -6,20 +6,20 @@ import Property.forAll
 
 object ISetTest extends Scalaprops {
 
-  val testFoldable =
+  properties("foldable") =
     scalazlaws.foldable.all[ISet]
 
-  val testOrder =
+  properties("order") =
     scalazlaws.order.all[ISet[Int]]
 
-  val testMonoid =
+  properties("monoid") =
     scalazlaws.monoid.all[ISet[Int]]
 
-  val filter = forAll { (a: ISet[Int], p: Int => Boolean) =>
+  property("filter") = forAll { (a: ISet[Int], p: Int => Boolean) =>
     (a filter p).toList == a.toList.filter(p)
   }
 
-  val partition = forAll { (a: ISet[Int], p: Int => Boolean) =>
+  property("partition") = forAll { (a: ISet[Int], p: Int => Boolean) =>
     val (x, y) = a partition p
     assert((x.size + y.size) == a.size)
     assert((x union y) == a)

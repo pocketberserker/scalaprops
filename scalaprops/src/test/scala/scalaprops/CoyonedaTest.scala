@@ -5,10 +5,10 @@ import scalaz.std.anyVal._
 
 object CoyonedaTest extends Scalaprops {
 
-  val testOrderMaybe = scalazlaws.order.all[Coyoneda[Maybe, Int]]
-  val testOrderIList = scalazlaws.order.all[Coyoneda[IList, Int]]
+  properties("OrderMaybe") = scalazlaws.order.all[Coyoneda[Maybe, Int]]
+  properties("OrderIList") = scalazlaws.order.all[Coyoneda[IList, Int]]
 
-  val testNel = {
+  properties("Nel") = {
     type F[A] = Coyoneda[NonEmptyList, A]
 
     Properties.list(
@@ -19,7 +19,7 @@ object CoyonedaTest extends Scalaprops {
     )
   }
 
-  val testMaybe = {
+  properties("Maybe") = {
     type F[A] = Coyoneda[Maybe, A]
 
     Properties.list(
@@ -29,7 +29,7 @@ object CoyonedaTest extends Scalaprops {
     )
   }
 
-  val testIList = {
+  properties("IList") = {
     type F[A] = Coyoneda[IList, A]
 
     Properties.list(

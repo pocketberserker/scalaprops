@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object IndSeqTest extends Scalaprops {
 
-  val testLaw =
+  properties("Law") =
     Properties.list(
       scalazlaws.monadPlusStrong.all[IndSeq],
       scalazlaws.traverse.all[IndSeq],

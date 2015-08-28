@@ -8,7 +8,7 @@ object Function1Test extends Scalaprops {
 
   import FunctionEqual._
 
-  val testLaws1 = {
+  properties("Laws1") = {
     type F1[A] = Int => A
     type F2[A] = A => Int
 
@@ -21,5 +21,5 @@ object Function1Test extends Scalaprops {
     )
   }
 
-  val testLaws2 = scalazlaws.monoid.all[Int => Int]
+  properties("Laws2") = scalazlaws.monoid.all[Int => Int]
 }

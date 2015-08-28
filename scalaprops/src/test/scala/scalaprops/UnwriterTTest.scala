@@ -6,7 +6,7 @@ import scalaz.std.tuple._
 
 object UnwriterTTest extends Scalaprops {
 
-  val id = {
+  properties("id") = {
     type F[A] = Unwriter[Int, A]
 
     Properties.list(
@@ -17,7 +17,7 @@ object UnwriterTTest extends Scalaprops {
     )
   }
 
-  val testMaybe1 = {
+  properties("Maybe1") = {
     type F[A] = UnwriterT[Maybe, Int, A]
 
     Properties.list(
@@ -27,7 +27,7 @@ object UnwriterTTest extends Scalaprops {
     )
   }
 
-  val testMaybe2 = {
+  properties("Maybe2") = {
     type F[A, B] = UnwriterT[Maybe, A, B]
 
     scalazlaws.bitraverse.all[F]

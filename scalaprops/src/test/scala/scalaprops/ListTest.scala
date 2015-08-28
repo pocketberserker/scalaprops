@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object ListTest extends Scalaprops {
 
-  val testLaws = Properties.list(
+  properties("Laws") = Properties.list(
     scalazlaws.monadPlusStrong.all[List],
     scalazlaws.align.all[List],
     scalazlaws.zip.all[List],

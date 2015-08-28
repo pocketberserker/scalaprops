@@ -42,16 +42,16 @@ object KleisliTest extends Scalaprops {
   )(_ orElse _)
 
 
-  val testMaybe = kleisliTest[Maybe]
+  properties("Maybe") = kleisliTest[Maybe]
 
-  val testIList = kleisliTest[IList].andThenParamPF{
+  properties("IList") = kleisliTest[IList].andThenParamPF{
     case Or.R(Or.L(p)) if sizeSetting.isDefinedAt(p) => sizeSetting(p)
   }
 
-  val testNonEmptyList = kleisliTest[NonEmptyList].andThenParamPF{
+  properties("NonEmptyList") = kleisliTest[NonEmptyList].andThenParamPF{
     case Or.R(Or.L(p)) if sizeSetting.isDefinedAt(p) => sizeSetting(p)
   }
 
-  val monadTrans = scalazlaws.monadTrans.all[({type l[f[_], a] = Kleisli[f, Int, a]})#l]
+  properties("monadTrans") = scalazlaws.monadTrans.all[({type l[f[_], a] = Kleisli[f, Int, a]})#l]
 
 }

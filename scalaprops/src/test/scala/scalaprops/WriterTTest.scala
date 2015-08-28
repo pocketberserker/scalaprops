@@ -6,7 +6,7 @@ import scalaz.std.tuple._
 
 object WriterTTest extends Scalaprops {
 
-  val testMaybe1 = {
+  properties("Maybe1") = {
     type F[A] = WriterT[Maybe, Int, A]
 
     Properties.list(
@@ -16,13 +16,13 @@ object WriterTTest extends Scalaprops {
     )
   }
 
-  val testMaybe2 = {
+  properties("Maybe2") = {
     type F[A, B] = WriterT[Maybe, A, B]
 
     scalazlaws.bitraverse.all[F]
   }
 
-  val iList1 = {
+  properties("iList1") = {
     type F[A] = WriterT[IList, Int, A]
 
     Properties.list(
@@ -32,7 +32,7 @@ object WriterTTest extends Scalaprops {
     )
   }
 
-  val either = {
+  properties("either") = {
     type F[A] = Byte \/ A
     type G[A] = WriterT[F, Short, A]
 
@@ -43,7 +43,7 @@ object WriterTTest extends Scalaprops {
     )
   }
 
-  val id = {
+  properties("id") = {
     type F[A] = Writer[Int, A]
 
     Properties.list(
@@ -54,6 +54,6 @@ object WriterTTest extends Scalaprops {
     )
   }
 
-  val monadTrans = scalazlaws.monadTrans.all[({type l[f[_], a] = WriterT[f, Int, a]})#l]
+  properties("monadTrans") = scalazlaws.monadTrans.all[({type l[f[_], a] = WriterT[f, Int, a]})#l]
 
 }

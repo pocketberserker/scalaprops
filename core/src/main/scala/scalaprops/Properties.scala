@@ -1,7 +1,11 @@
 package scalaprops
 
 import scalaz._
+import scala.scalajs.js.annotation.JSExportDescendentObjects
+import scala.scalajs.js.annotation.JSExportDescendentClasses
 
+@JSExportDescendentObjects
+@JSExportDescendentClasses
 final case class Properties[A] private (props: Tree[(A, Maybe[Check])]) {
   def id: A = props.rootLabel._1
 
@@ -94,7 +98,7 @@ object Properties {
       id, prop0.props #:: props.map(_.props).toStream
     )
 
-  private[this] def distinctTree[A](tree: Tree[A])(implicit A: Order[A]): Tree[A] = {
+  private[scalaprops] def distinctTree[A](tree: Tree[A])(implicit A: Order[A]): Tree[A] = {
     import std.stream._
 
     val x = Traverse[Tree].mapAccumL(tree, ISet.empty[A]) { (set, a) =>

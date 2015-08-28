@@ -1,3 +1,5 @@
+// since 7.1.3
+/*
 package scalaprops
 
 import scalaz._
@@ -36,3 +38,4 @@ object IdTTest extends Scalaprops {
   }
 
 }
+*/

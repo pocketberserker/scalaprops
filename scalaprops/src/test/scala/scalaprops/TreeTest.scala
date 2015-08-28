@@ -6,9 +6,10 @@ import scalaz.std.string._
 
 object TreeTest extends Scalaprops {
 
-  val laws = Properties.list(
+  properties("laws") = Properties.list(
     scalazlaws.traverse1.all[Tree],
-    scalazlaws.align.all[Tree],
+    // since 7.1.3
+    //scalazlaws.align.all[Tree]
     scalazlaws.monad.all[Tree]
   )
 
@@ -16,7 +17,7 @@ object TreeTest extends Scalaprops {
 
   // TODO test comonad law
 
-  val treeGenSize = {
+  properties("GenSize") = {
     val F = Foldable[Tree]
     val p = { (size: Int) =>
       Property.forAll{ tree: Tree[Int] =>

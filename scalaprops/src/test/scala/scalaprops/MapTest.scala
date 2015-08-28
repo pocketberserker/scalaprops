@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object MapTest extends Scalaprops {
 
-  val testLaws1 = {
+  properties("Laws1") = {
     type F[A] = Map[Int, A]
     Properties.list(
       scalazlaws.bind.all[F],
@@ -16,5 +16,5 @@ object MapTest extends Scalaprops {
     )
   }
 
-  val testLaws2 = scalazlaws.monoid.all[Map[Int, Int]]
+  properties("Laws2") = scalazlaws.monoid.all[Map[Int, Int]]
 }

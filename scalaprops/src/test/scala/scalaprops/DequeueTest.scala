@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object DequeueTest extends Scalaprops {
 
-  val testLaws =
+  properties("Laws") =
     Properties.list(
       scalazlaws.functor.all[Dequeue],
       scalazlaws.foldable.all[Dequeue],

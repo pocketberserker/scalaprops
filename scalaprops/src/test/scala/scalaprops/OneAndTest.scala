@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object OneAndTest extends Scalaprops {
 
-  val testIList = {
+  properties("IList") = {
     type F[A] = OneAnd[IList, A]
 
     Properties.list(
@@ -13,12 +13,13 @@ object OneAndTest extends Scalaprops {
       scalazlaws.monad.all[F],
       scalazlaws.zip.all[F],
       scalazlaws.traverse1.all[F],
-      scalazlaws.align.all[F],
+      // since 7.1.3
+      //scalazlaws.align.all[F]
       scalazlaws.plus.all[F]
     )
   }
 
-  val testMaybe = {
+  properties("Maybe") = {
     type F[A] = OneAnd[Maybe, A]
 
     Properties.list(
@@ -31,7 +32,7 @@ object OneAndTest extends Scalaprops {
     )
   }
 
-  val testNel = {
+  properties("Nel") = {
     type F[A] = OneAnd[NonEmptyList, A]
 
     Properties.list(
@@ -44,13 +45,14 @@ object OneAndTest extends Scalaprops {
     )
   }
 
-  val tree = {
+  properties("tree") = {
     type F[A] = OneAnd[Tree, A]
 
     Properties.list(
       scalazlaws.equal.all[F[Int]],
-      scalazlaws.traverse1.all[F],
-      scalazlaws.align.all[F]
+      scalazlaws.traverse1.all[F]
+      // since 7.1.3
+      //scalazlaws.align.all[F]
     )
   }
 

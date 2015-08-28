@@ -5,6 +5,7 @@ import scala.collection.generic.CanBuildFrom
 import scala.concurrent.Future
 import scalaz._
 import scalaz.Isomorphism.{<~>, IsoFunctorTemplate}
+import java.util.concurrent.TimeUnit
 
 final case class Gen[A] private(f: (Int, Rand) => (Rand, A)) {
 
@@ -901,10 +902,15 @@ object Gen extends GenInstances0 {
   implicit def partialFunctionGen[A: Cogen, B: Gen]: Gen[PartialFunction[A, B]] =
     Gen[A => Option[B]].map(Function.unlift)
 
-  implicit def javaEnumGen[A <: java.lang.Enum[A]](implicit A: reflect.ClassTag[A]): Gen[A] = {
-    val array = A.runtimeClass.getEnumConstants.asInstanceOf[Array[A]]
-    choose(0, array.length - 1).map(array)
-  }
+  implicit val timeUnitGen: Gen[TimeUnit] = elements(
+    TimeUnit.NANOSECONDS,
+    TimeUnit.MICROSECONDS,
+    TimeUnit.MILLISECONDS,
+    TimeUnit.SECONDS,
+    TimeUnit.MINUTES,
+    TimeUnit.HOURS,
+    TimeUnit.DAYS
+  )
 
   implicit def bijectionTGen[F[_], G[_], A, B](implicit A: Cogen[A], B: Cogen[B], F: Gen[F[B]], G: Gen[G[A]]): Gen[BijectionT[F, G, A, B]] =
     Gen[(A => F[B], B => G[A])].map{ case (f, g) => BijectionT.bijection(f, g) }

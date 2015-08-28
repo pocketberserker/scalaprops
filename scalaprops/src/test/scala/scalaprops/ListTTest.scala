@@ -6,13 +6,13 @@ import scalaz.std.list._
 
 object ListTTest extends Scalaprops {
 
-  val testMaybe =
+  properties("Maybe") =
     scalazlaws.monad.all[({type l[a] = ListT[Maybe, a]})#l]
 
-  val testDisableTestList =
+  properties("DisableTestList") =
     scalazlaws.bind.laws[({type l[a] = ListT[IList, a]})#l].andThenParam(Param.maxSize(2))
       .ignore("https://github.com/scalaz/scalaz/issues/921")
 
-  val monadTrans = scalazlaws.monadTrans.all[ListT]
+  properties("monadTrans") = scalazlaws.monadTrans.all[ListT]
 
 }

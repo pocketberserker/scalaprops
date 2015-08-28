@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object ZipperTest extends Scalaprops {
 
-  val testLaw =
+  properties("Law") =
     Properties.list(
       scalazlaws.comonad.all[Zipper],
       scalazlaws.apply.all[Zipper],

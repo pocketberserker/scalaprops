@@ -15,7 +15,7 @@ object CokleisliTest extends Scalaprops {
     Equal[F[A] => B].contramap(_.run)
   }
 
-  val testLaws = {
+  properties("Laws") = {
     type C1[A] = Cokleisli[Maybe, Int, A]
     type C2[A, B] = Cokleisli[NonEmptyList, A, B]
 

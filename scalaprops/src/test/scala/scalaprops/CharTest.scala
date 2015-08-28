@@ -38,10 +38,10 @@ object CharTest extends Scalaprops {
     x.product(y)
   }
 
-  val num = check[GenTags.Num]('0' to '9')
-  val upper = check[GenTags.AlphaUpper]('A' to 'Z')
-  val lower = check[GenTags.AlphaLower]('a' to 'z')
-  val alpha = check[GenTags.Alpha](('a' to 'z') ++ ('A' to 'Z'))
-  val alphaNum = check[GenTags.AlphaNum](('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9'))
+  properties("num") = check[GenTags.Num]('0' to '9')
+  properties("upper") = check[GenTags.AlphaUpper]('A' to 'Z')
+  properties("lower") = check[GenTags.AlphaLower]('a' to 'z')
+  properties("alpha") = check[GenTags.Alpha](('a' to 'z') ++ ('A' to 'Z'))
+  properties("alphaNum") = check[GenTags.AlphaNum](('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9'))
 
 }

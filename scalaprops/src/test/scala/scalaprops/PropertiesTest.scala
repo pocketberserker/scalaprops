@@ -77,11 +77,7 @@ object PropertiesTest extends Scalaprops {
 
     assert(list.drawTree == dag)
 
-    val clazz = Properties.getClass
-    val methodName = "distinctTree"
-    val method = clazz.getDeclaredMethods.find(_.getName == methodName).getOrElse(sys.error("not found " + methodName))
-    method.setAccessible(true)
-    val tree = method.invoke(Properties, list, Order[String]).asInstanceOf[Tree[String]]
+    val tree = Properties.distinctTree(list)(Order[String])
     tree.drawTree == """"list instance"
 |
 +- "isEmpty"

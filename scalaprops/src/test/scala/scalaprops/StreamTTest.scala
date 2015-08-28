@@ -6,7 +6,7 @@ import scalaz.std.stream._
 
 object StreamTTest extends Scalaprops {
 
-  val testId = {
+  properties("Id") = {
     import scalaz.Id._
     type F[A] = StreamT[Id, A]
     Properties.list(
@@ -15,7 +15,7 @@ object StreamTTest extends Scalaprops {
     )
   }
 
-  val testOneOrTwo = {
+  properties("OneOrTwo") = {
     type OneOrTwo[A] = OneAnd[Maybe, A]
     type F[A] = StreamT[OneOrTwo, A]
     Properties.list(
@@ -24,7 +24,7 @@ object StreamTTest extends Scalaprops {
     )
   }.andThenParam(Param.maxSize(2))
 
-  val testMaybe = {
+  properties("Maybe") = {
     type F[A] = StreamT[Maybe, A]
     Properties.list(
       scalazlaws.monadPlus.all[F],
@@ -32,7 +32,7 @@ object StreamTTest extends Scalaprops {
     )
   }
 
-  val iList = {
+  properties("iList") = {
     type F[A] = StreamT[IList, A]
     Properties.list(
       scalazlaws.monadPlus.all[F],
@@ -40,6 +40,6 @@ object StreamTTest extends Scalaprops {
     )
   }.andThenParam(Param.maxSize(3))
 
-  val monadTrans = scalazlaws.monadTrans.all[StreamT]
+  properties("monadTrans") = scalazlaws.monadTrans.all[StreamT]
 
 }

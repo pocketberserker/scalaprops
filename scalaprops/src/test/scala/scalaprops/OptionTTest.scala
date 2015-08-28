@@ -6,7 +6,7 @@ import scalaz.std.option._
 
 object OptionTTest extends Scalaprops{
 
-  val iList = {
+  properties("IList") = {
     type F[A] = OptionT[IList, A]
     Properties.list(
       scalazlaws.equal.all[OptionT[IList, Int]],
@@ -15,7 +15,7 @@ object OptionTTest extends Scalaprops{
     )
   }
 
-  val maybe = {
+  properties("maybe") = {
     type F[A] = OptionT[Maybe, A]
     Properties.list(
       scalazlaws.equal.all[OptionT[Maybe, Int]],
@@ -24,6 +24,6 @@ object OptionTTest extends Scalaprops{
     )
   }
 
-  val monadTrans = scalazlaws.monadTrans.all[OptionT]
+  properties("Monad Trans") = scalazlaws.monadTrans.all[OptionT]
 
 }

@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object OneOrTest extends Scalaprops {
 
-  val testIList = {
+  properties("IList") = {
     type F[A] = OneOr[IList, A]
 
     Properties.list(
@@ -16,7 +16,7 @@ object OneOrTest extends Scalaprops {
     )
   }
 
-  val testNel = {
+  properties("Mel") = {
     type F[A] = OneOr[NonEmptyList, A]
 
     Properties.list(

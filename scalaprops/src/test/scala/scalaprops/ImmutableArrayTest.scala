@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object ImmutableArrayTest extends Scalaprops {
 
-  val testEqual = scalazlaws.equal.all[ImmutableArray[Int]]
-  val testFoldable = scalazlaws.foldable.all[ImmutableArray]
+  properties("Equal") = scalazlaws.equal.all[ImmutableArray[Int]]
+  properties("Foldable") = scalazlaws.foldable.all[ImmutableArray]
 
 }

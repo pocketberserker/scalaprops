@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object ValidationTest extends Scalaprops {
 
-  val testLaws1 = {
+  properties("Laws1") = {
     type F[A] = ValidationNel[Int, A]
 
     Properties.list(
@@ -15,8 +15,8 @@ object ValidationTest extends Scalaprops {
     )
   }
 
-  val testLaws2 = scalazlaws.associative.all[Validation]
-  val testLaws3 = scalazlaws.bitraverse.all[Validation]
-  val testLaws4 = scalazlaws.monoid.all[Validation[Int, Int]]
-  val testOrder = scalazlaws.order.all[Validation[Int, Int]]
+  properties("Laws2") = scalazlaws.associative.all[Validation]
+  properties("Laws3") = scalazlaws.bitraverse.all[Validation]
+  properties("Laws4") = scalazlaws.monoid.all[Validation[Int, Int]]
+  properties("Order") = scalazlaws.order.all[Validation[Int, Int]]
 }

@@ -22,7 +22,7 @@ object CofreeTest extends Scalaprops {
       A.equal(a.head, b.head) && F.value.equal(a.tail, b.tail)
     )
 
-  val testMaybe = {
+  properties("Maybe") = {
     implicit def genCofreeMaybe[A: Gen] =
       Gen[OneAnd[List, A]].map{ list =>
         Cofree.unfold(list){
@@ -43,7 +43,7 @@ object CofreeTest extends Scalaprops {
     )
   }
 
-  val stream = {
+  properties("stream") = {
     type CofreeStream[A] = Cofree[Stream, A]
 
     import scalaz.std.stream._
@@ -78,7 +78,7 @@ object CofreeTest extends Scalaprops {
       )
   }
 
-  val disjunction = {
+  properties("disjunction") = {
     type E[A] = Byte \/ A
     type F[A] = Cofree[E, A]
 
@@ -92,7 +92,7 @@ object CofreeTest extends Scalaprops {
     )
   }
 
-  val validation = {
+  properties("validation") = {
     type E[A] = ValidationNel[Byte, A]
     type F[A] = Cofree[E, A]
 

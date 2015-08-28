@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object OptionTest extends Scalaprops {
 
-  val testLaws =
+  properties("Laws") =
     Properties.list(
       scalazlaws.monadPlusStrong.all[Option],
       scalazlaws.traverse.all[Option],

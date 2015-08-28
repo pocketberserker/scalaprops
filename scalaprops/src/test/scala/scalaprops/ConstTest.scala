@@ -5,11 +5,12 @@ import scalaz.std.anyVal._
 
 object ConstTest extends Scalaprops {
 
-  val testInt = {
+  properties("Int")= {
     type F[A] = Const[Int, A]
     Properties.list(
       scalazlaws.applicative.all[F],
-      scalazlaws.contravariant.all[F],
+      // since 7.1.3
+      //scalazlaws.contravariant.all[F],
       scalazlaws.order.all[Const[Int, Int]]
     )
   }

@@ -13,15 +13,15 @@ object IndexedStoreTTest extends Scalaprops {
     Equal[(F[A => B], I)].contramap(_.run)
 
 
-  val testMaybe1 = scalazlaws.contravariant.all[({type l[A] = IndexedStoreT[Maybe, Int, A, Int]})#l]
-  val testIList1 = scalazlaws.contravariant.all[({type l[A] = IndexedStoreT[IList, Int, A, Int]})#l]
+  properties("Maybe1") = scalazlaws.contravariant.all[({type l[A] = IndexedStoreT[Maybe, Int, A, Int]})#l]
+  properties("IList1") = scalazlaws.contravariant.all[({type l[A] = IndexedStoreT[IList, Int, A, Int]})#l]
 
-  val testMaybe2 = scalazlaws.bifunctor.all[({type l[A, B] = IndexedStoreT[Maybe, A, Int, B]})#l]
-  val testIList2 = scalazlaws.bifunctor.all[({type l[A, B] = IndexedStoreT[IList, A, Int, B]})#l]
+  properties("Maybe2") = scalazlaws.bifunctor.all[({type l[A, B] = IndexedStoreT[Maybe, A, Int, B]})#l]
+  properties("IList2") = scalazlaws.bifunctor.all[({type l[A, B] = IndexedStoreT[IList, A, Int, B]})#l]
 
-  val testNel = scalazlaws.comonad.all[({type l[A] = StoreT[NonEmptyList, Int, A]})#l]
-  val testMaybe3 = scalazlaws.cobind.all[({type l[A] = StoreT[Maybe, Int, A]})#l]
-  val testIList3 = scalazlaws.cobind.all[({type l[A] = StoreT[IList, Int, A]})#l]
+  properties("Nel") = scalazlaws.comonad.all[({type l[A] = StoreT[NonEmptyList, Int, A]})#l]
+  properties("Maybe3") = scalazlaws.cobind.all[({type l[A] = StoreT[Maybe, Int, A]})#l]
+  properties("IList3") = scalazlaws.cobind.all[({type l[A] = StoreT[IList, Int, A]})#l]
 
-  val comonadTransLaws = scalazlaws.comonadTrans.all[({type l[f[_], a] = StoreT[f, Int, a]})#l]
+  properties("comonadTransLaws") = scalazlaws.comonadTrans.all[({type l[f[_], a] = StoreT[f, Int, a]})#l]
 }

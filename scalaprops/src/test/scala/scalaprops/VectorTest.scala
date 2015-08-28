@@ -5,7 +5,7 @@ import scalaz.std.anyVal._
 
 object VectorTest extends Scalaprops {
 
-  val testLaws =
+  properties("Laws") =
     Properties.list(
       scalazlaws.monadPlusStrong.all[Vector],
       scalazlaws.traverse.all[Vector],

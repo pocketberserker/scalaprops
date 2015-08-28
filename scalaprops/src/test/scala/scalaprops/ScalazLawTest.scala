@@ -1,9 +1,9 @@
 package scalaprops
 
 object ScalazLawTest extends Scalaprops {
-  val testLaws = scalazlaws.order.all[ScalazLaw]
+  properties("Laws") = scalazlaws.order.all[ScalazLaw]
 
-  val testFullnameUnique = Property.forAll{
+  property("FullnameUnique") = Property.forAll{
     ScalazLaw.values.map(_.fullName).distinct.size == ScalazLaw.values.size
   }
 }
