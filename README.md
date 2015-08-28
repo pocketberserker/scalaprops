@@ -24,4 +24,5 @@ libraryDependencies += "com.github.pocketberserker" %%% "scalaprops-scalazlaws" 
 * ScalaCheck style test suite
 * Removed support for
     * scala.concurrent.Future
+    * timeout setting
 
