@@ -1,69 +1,14 @@
 package scalaprops
 
 import java.lang.Thread.UncaughtExceptionHandler
-import java.lang.reflect.Method
 import java.util.concurrent.{TimeoutException, ForkJoinPool}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 import sbt.testing._
 import scala.util.control.NonFatal
 import scalaz._
-import scala.reflect.NameTransformer
+import org.scalajs.testinterface.TestUtils
 
 object ScalapropsRunner {
-
-  def testFieldNames(clazz: Class[_]): Array[String] =
-    Array(
-      findTestFields(clazz, classOf[Property]),
-      findTestFields(clazz, classOf[Properties[_]])
-    ).flatten.map(_.getName)
-
-  private[this] def findTestFields(clazz: Class[_], fieldType: Class[_]): Array[Method] =
-    clazz.getMethods.filter(method =>
-      method.getParameterTypes.length == 0 && method.getReturnType == fieldType
-    )
-
-  private[this] def invokeProperty(clazz: Class[_], obj: Scalaprops): List[(String, Property)] =
-    findTestFields(clazz, classOf[Property]).map{ method =>
-      val p = method.invoke(obj).asInstanceOf[Property]
-      NameTransformer.decode(method.getName) -> p
-    }.toList
-
-  private[this] def invokeProperties(clazz: Class[_], obj: Scalaprops): List[Properties[Any]] =
-    findTestFields(clazz, classOf[Properties[_]]).map{ method =>
-      val methodName = NameTransformer.decode(method.getName)
-      val props = method.invoke(obj).asInstanceOf[Properties[Any]].props
-      Properties.noSort[Any](
-        Tree.node(
-          methodName -> Maybe.empty,
-          props #:: Stream.empty
-        )
-      )
-    }(collection.breakOut)
-
-  private def allProps(clazz: Class[_], obj: Scalaprops, only: Option[NonEmptyList[String]], logger: Logger): Properties[_] = {
-    val tests0 = invokeProperty(clazz, obj).map {
-      case (name, p) => p.toProperties[Any](name)
-    } ::: invokeProperties(clazz, obj)
-
-    val tests = only match {
-      case Some(names) =>
-        val set = Foldable[NonEmptyList].toSet(names)
-        val actualTests: Set[String] = tests0.map(_.id.toString)(collection.breakOut)
-        set.filterNot(actualTests).foreach{ typo =>
-          logger.warn(s"""'${clazz.getCanonicalName.dropRight(1)}.$typo' does not exists""")
-        }
-        tests0.filter(p => set(p.id.toString))
-      case None =>
-        tests0
-    }
-
-    Properties.noSort[Any](
-      Tree.node(
-        clazz.getName -> Maybe.empty,
-        obj.transformProperties(tests).map(_.props)(collection.breakOut)
-      )
-    )
-  }
 
   private def logger(loggers: Array[Logger]): Logger = new Logger {
     override def warn(msg: String): Unit =
@@ -101,6 +46,10 @@ final class ScalapropsRunner(
     new sbt.testing.Task {
       override def taskDef() = taskdef
 
+      override def execute(eventHandler: EventHandler, loggers: Array[Logger], continuation: (Array[Task]) => Unit): Unit = {
+        continuation(execute(eventHandler, loggers))
+      }
+
       override def execute(eventHandler: EventHandler, loggers: Array[Logger]) = {
         val log = ScalapropsRunner.logger(loggers)
 
@@ -118,14 +67,26 @@ final class ScalapropsRunner(
           false
         )
 
-        val only = scalaz.std.list.toNel(
-          args.dropWhile("--only" != _).drop(1).takeWhile(arg => !arg.startsWith("--")).toList
-        )
-
         try {
-          val clazz = testClassLoader.loadClass(testClassName + "$")
-          val obj = clazz.getDeclaredField("MODULE$").get(null).asInstanceOf[Scalaprops]
-          val test = ScalapropsRunner.allProps(clazz, obj, only, log)
+          val obj = taskDef.fingerprint() match {
+            case fingerprint: SubclassFingerprint if fingerprint.superclassName() == "scalaprops.Scalaprops" =>
+              if (fingerprint.isModule) {
+                TestUtils.loadModule(testClassName, testClassLoader) match {
+                  case m : Scalaprops => m
+                  case x => throw new Exception(s"Cannot test $taskDef of type: $x")
+                }
+              }
+              else {
+                throw new Exception("FunSuite only works on objects, classes don't work.")
+              }
+            case _ => throw new Exception("can not find scalaporps.Scalaprops instance.")
+          }
+          val test = Properties.noSort[Any](
+            Tree.node(
+              testClassName -> Maybe.empty,
+              obj.transformProperties(obj.props.toList).map(_.props)(collection.breakOut)
+            )
+          )
           val result = test.props.map { case (id, checkOpt) =>
             val name = id.toString // TODO create type class ?
             (id: Any) -> (checkOpt match{
@@ -212,10 +173,16 @@ final class ScalapropsRunner(
 
   override def tasks(taskDefs: Array[TaskDef]) = taskDefs.map(taskdef2task)
 
-  override def done() =
-    s"""done
-Total test count: $testCount
-Failed $failureCount, Errors $errorCount, Passed $successCount, Ignored $ignoredCount
-"""
+  override def done() = Seq(
+    s"Total test count: $testCount",
+    s"Failed $failureCount, Errors $errorCount, Passed $successCount, Ignored $ignoredCount"
+  ).map(Console.CYAN + _).mkString(sys.props("line.separator"))
 
+  override def receiveMessage(msg: String) = None
+
+  override def serializeTask(task: sbt.testing.Task, serializer: TaskDef => String) =
+    serializer(task.taskDef())
+
+  override def deserializeTask(task: String, deserializer: String => TaskDef) =
+    taskdef2task(deserializer(task))
 }

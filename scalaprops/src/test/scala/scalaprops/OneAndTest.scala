@@ -13,7 +13,8 @@ object OneAndTest extends Scalaprops {
       scalazlaws.monad.all[F],
       scalazlaws.zip.all[F],
       scalazlaws.traverse1.all[F],
-      scalazlaws.align.all[F],
+      // since 7.1.3
+      //scalazlaws.align.all[F]
       scalazlaws.plus.all[F]
     )
   }
@@ -49,8 +50,9 @@ object OneAndTest extends Scalaprops {
 
     Properties.list(
       scalazlaws.equal.all[F[Int]],
-      scalazlaws.traverse1.all[F],
-      scalazlaws.align.all[F]
+      scalazlaws.traverse1.all[F]
+      // since 7.1.3
+      //scalazlaws.align.all[F]
     )
   }
 

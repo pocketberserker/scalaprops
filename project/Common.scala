@@ -7,19 +7,6 @@ import xerial.sbt.Sonatype.SonatypeKeys
 
 object Common {
 
-  def shapelessDependency(scope: String) =
-    libraryDependencies ++= {
-      val v = build.shapelessVersion.value
-      if(scalaVersion.value.startsWith("2.10")) Seq(
-        "com.chuusai" %% "shapeless" % v % scope,
-        compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
-      ) else if(scalaVersion.value.startsWith("2.12")) {
-        Nil
-      } else Seq(
-        "com.chuusai" %% "shapeless" % v % scope
-      )
-    }
-
   private[this] def gitHash = scala.util.Try(
     sys.process.Process("git rev-parse HEAD").lines_!.head
   ).getOrElse("master")
@@ -32,13 +19,13 @@ object Common {
 
   private[this] val Scala211 = "2.11.7"
 
-  val commonSettings = scalaprops.ScalapropsPlugin.autoImport.scalapropsCoreSettings ++ Seq(
+  val commonSettings = Seq(
     scalaVersion := Scala211,
-    crossScalaVersions := "2.12.0-M2" :: Scala211 :: "2.10.5" :: Nil,
-    organization := "com.github.scalaprops",
-    description := "property based testing library for Scala",
+    crossScalaVersions := Scala211 :: "2.10.5" :: Nil,
+    organization := "com.github.pocketberserker",
+    description := "property based testing library for Scala.JS",
     fullResolvers ~= {_.filterNot(_.name == "jcenter")},
-    homepage := Some(url("https://github.com/scalaprops/scalaprops")),
+    homepage := Some(url("https://github.com/pocketberserker/scalaprops")),
     licenses := Seq("MIT License" -> url("http://www.opensource.org/licenses/mit-license.php")),
     commands += Command.command("updateReadme")(UpdateReadme.updateReadmeTask),
     pomPostProcess := { node =>
@@ -51,13 +38,6 @@ object Common {
       val stripTestScope = stripIf { n => n.label == "dependency" && (n \ "scope").text == "test" }
       new RuleTransformer(stripTestScope).transform(node)(0)
     },
-    scalacOptions in (Compile, doc) ++= {
-      val tag = if(isSnapshot.value) gitHash else { "v" + version.value }
-      Seq(
-        "-sourcepath", (baseDirectory in LocalRootProject).value.getAbsolutePath,
-        "-doc-source-url", s"https://github.com/scalaprops/scalaprops/tree/${tag}€{FILE_PATH}.scala"
-      )
-    },
     pomExtra := (
       <developers>
         <developer>
@@ -65,10 +45,15 @@ object Common {
           <name>Kenji Yoshida</name>
           <url>https://github.com/xuwei-k</url>
         </developer>
+        <developer>
+          <id>pocketberserker</id>
+          <name>Yuki Nakayama</name>
+          <url>https://github.com/pocketberserker</url>
+        </developer>
       </developers>
       <scm>
-        <url>git@github.com:scalaprops/scalaprops.git</url>
-        <connection>scm:git:git@github.com:scalaprops/scalaprops.git</connection>
+        <url>git@github.com:pocketberserker/scalaprops.git</url>
+        <connection>scm:git:git@github.com:pocketberserker/scalaprops.git</connection>
         <tag>{if(isSnapshot.value) gitHash else { "v" + version.value }}</tag>
       </scm>
     ),
@@ -103,10 +88,6 @@ object Common {
       ),
       setNextVersion,
       commitNextVersion,
-      ReleaseStep{ state =>
-        val extracted = Project extract state
-        extracted.runAggregated(SonatypeKeys.sonatypeReleaseAll in Global in extracted.get(thisProjectRef), state)
-      },
       UpdateReadme.updateReadmeProcess,
       pushChanges
     ),

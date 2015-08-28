@@ -8,7 +8,8 @@ object TreeTest extends Scalaprops {
 
   val laws = Properties.list(
     scalazlaws.traverse1.all[Tree],
-    scalazlaws.align.all[Tree],
+    // since 7.1.3
+    //scalazlaws.align.all[Tree]
     scalazlaws.monad.all[Tree]
   )
 
