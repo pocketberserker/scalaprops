@@ -67,8 +67,8 @@ object build extends Build {
         s
       }
     },
-    testFrameworks += new TestFramework("scalaprops.ScalapropsFramework")
-    //parallelExecution in Test := false
+    testFrameworks += new TestFramework("scalaprops.ScalapropsFramework"),
+    parallelExecution in Test := false
   ).dependsOn(core, scalazlaws % "test")
 
   val root = Project("root", file(".")).settings(
